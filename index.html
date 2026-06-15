@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gestion Agence de Location - Fleet Management</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+:root {
+  --primary:#1e3a5f;--primary-light:#2a5285;--secondary:#0d8b6d;--accent:#e8b923;
+  --danger:#dc3545;--warning:#f39c12;--info:#3498db;--bg:#f4f6f9;--card-bg:#ffffff;
+  --text:#2c3e50;--text-light:#7f8c8d;--border:#e1e8ed;
+  --shadow:0 2px 12px rgba(0,0,0,0.08);--shadow-hover:0 8px 30px rgba(0,0,0,0.12);
+  --radius:12px;--sidebar-width:260px;--header-height:64px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+.sidebar{position:fixed;left:0;top:0;width:var(--sidebar-width);height:100vh;background:linear-gradient(180deg,var(--primary) 0%,#0f2744 100%);color:#fff;z-index:1000;display:flex;flex-direction:column;transition:transform .3s}
+.sidebar-header{padding:24px 20px;border-bottom:1px solid rgba(255,255,255,0.1)}
+.sidebar-header h1{font-size:1.1rem;font-weight:700;display:flex;align-items:center;gap:10px}
+.sidebar-header h1 i{color:var(--accent)}
+.sidebar-header p{font-size:.75rem;opacity:.6;margin-top:4px}
+.nav-menu{flex:1;padding:16px 12px;overflow-y:auto}
+.nav-item{display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:10px;cursor:pointer;transition:all .2s;margin-bottom:4px;font-size:.9rem;font-weight:500;color:rgba(255,255,255,0.75)}
+.nav-item:hover,.nav-item.active{background:rgba(255,255,255,0.12);color:#fff}
+.nav-item.active{background:var(--secondary);box-shadow:0 4px 15px rgba(13,139,109,0.3)}
+.nav-item i{width:20px;text-align:center;font-size:1rem}
+.nav-badge{margin-left:auto;background:var(--danger);color:#fff;font-size:.7rem;padding:2px 8px;border-radius:10px;font-weight:600}
+.sidebar-footer{padding:16px;border-top:1px solid rgba(255,255,255,0.1);font-size:.75rem;opacity:.5;text-align:center}
+.main-content{margin-left:var(--sidebar-width);min-height:100vh;transition:margin-left .3s}
+.topbar{height:var(--header-height);background:var(--card-bg);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 28px;position:sticky;top:0;z-index:100}
+.topbar-left{display:flex;align-items:center;gap:16px}
+.menu-toggle{display:none;background:none;border:none;font-size:1.3rem;color:var(--primary);cursor:pointer}
+.page-title{font-size:1.3rem;font-weight:700;color:var(--primary)}
+.topbar-right{display:flex;align-items:center;gap:16px}
+.search-box{position:relative}
+.search-box input{padding:8px 16px 8px 36px;border:1px solid var(--border);border-radius:20px;width:260px;font-size:.85rem;outline:none;transition:all .2s}
+.search-box input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(30,58,95,0.1)}
+.search-box i{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-light);font-size:.85rem}
+.user-avatar{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--secondary));color:#fff;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:.9rem;cursor:pointer}
+.content{padding:28px}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px;margin-bottom:28px}
+.kpi-card{background:var(--card-bg);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);transition:all .3s;position:relative;overflow:hidden}
+.kpi-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-hover)}
+.kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;border-radius:var(--radius) var(--radius) 0 0}
+.kpi-card.blue::before{background:var(--info)}
+.kpi-card.green::before{background:var(--secondary)}
+.kpi-card.orange::before{background:var(--warning)}
+.kpi-card.red::before{background:var(--danger)}
+.kpi-card.purple::before{background:#9b59b6}
+.kpi-icon{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;margin-bottom:14px}
+.kpi-card.blue .kpi-icon{background:rgba(52,152,219,0.1);color:var(--info)}
+.kpi-card.green .kpi-icon{background:rgba(13,139,109,0.1);color:var(--secondary)}
+.kpi-card.orange .kpi-icon{background:rgba(243,156,18,0.1);color:var(--warning)}
+.kpi-card.red .kpi-icon{background:rgba(220,53,69,0.1);color:var(--danger)}
+.kpi-card.purple .kpi-icon{background:rgba(155,89,182,0.1);color:#9b59b6}
+.kpi-label{font-size:.8rem;color:var(--text-light);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:6px}
+.kpi-value{font-size:1.8rem;font-weight:700;color:var(--text);margin-bottom:4px}
+.kpi-change{font-size:.8rem;font-weight:500}
+.kpi-change.positive{color:var(--secondary)}
+.kpi-change.negative{color:var(--danger)}
+.card{background:var(--card-bg);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:24px;overflow:hidden}
+.card-header{padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.card-title{font-size:1.05rem;font-weight:600;display:flex;align-items:center;gap:10px}
+.card-title i{color:var(--primary)}
+.card-body{padding:20px 24px}
+.btn{padding:10px 20px;border-radius:8px;border:none;font-size:.85rem;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:all .2s;font-family:inherit}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-primary:hover{background:var(--primary-light);transform:translateY(-1px)}
+.btn-success{background:var(--secondary);color:#fff}
+.btn-success:hover{background:#0a7a5e}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--text)}
+.btn-outline:hover{background:var(--bg)}
+.btn-sm{padding:6px 14px;font-size:.8rem}
+.btn-icon{width:34px;height:34px;padding:0;border-radius:8px;justify-content:center}
+.table-responsive{overflow-x:auto}
+.data-table{width:100%;border-collapse:collapse;font-size:.88rem}
+.data-table th{background:var(--bg);padding:14px 16px;text-align:left;font-weight:600;color:var(--text-light);text-transform:uppercase;font-size:.75rem;letter-spacing:.5px;border-bottom:2px solid var(--border);white-space:nowrap}
+.data-table td{padding:14px 16px;border-bottom:1px solid var(--border);vertical-align:middle}
+.data-table tr:hover td{background:rgba(30,58,95,0.02)}
+.data-table tr:last-child td{border-bottom:none}
+.badge{padding:4px 12px;border-radius:20px;font-size:.75rem;font-weight:600;display:inline-flex;align-items:center;gap:5px}
+.badge-success{background:rgba(13,139,109,0.1);color:var(--secondary)}
+.badge-danger{background:rgba(220,53,69,0.1);color:var(--danger)}
+.badge-warning{background:rgba(243,156,18,0.1);color:var(--warning)}
+.badge-info{background:rgba(52,152,219,0.1);color:var(--info)}
+.badge::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor}
+.alert-item{display:flex;align-items:center;gap:16px;padding:16px;border-radius:10px;margin-bottom:12px;border-left:4px solid}
+.alert-item.danger{background:rgba(220,53,69,0.05);border-color:var(--danger)}
+.alert-item.warning{background:rgba(243,156,18,0.05);border-color:var(--warning)}
+.alert-item.success{background:rgba(13,139,109,0.05);border-color:var(--secondary)}
+.alert-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.1rem}
+.alert-item.danger .alert-icon{background:rgba(220,53,69,0.1);color:var(--danger)}
+.alert-item.warning .alert-icon{background:rgba(243,156,18,0.1);color:var(--warning)}
+.alert-item.success .alert-icon{background:rgba(13,139,109,0.1);color:var(--secondary)}
+.alert-content{flex:1}
+.alert-title{font-weight:600;font-size:.95rem;margin-bottom:2px}
+.alert-desc{font-size:.85rem;color:var(--text-light)}
+.alert-days{font-size:.8rem;font-weight:600;padding:4px 10px;border-radius:6px}
+.alert-item.danger .alert-days{background:rgba(220,53,69,0.1);color:var(--danger)}
+.alert-item.warning .alert-days{background:rgba(243,156,18,0.1);color:var(--warning)}
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px}
+.form-group{margin-bottom:16px}
+.form-label{display:block;font-size:.85rem;font-weight:600;color:var(--text);margin-bottom:6px}
+.form-input,.form-select{width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-size:.9rem;font-family:inherit;outline:none;transition:all .2s}
+.form-input:focus,.form-select:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(30,58,95,0.08)}
+.chart-container{position:relative;height:300px;width:100%}
+.chart-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(400px,1fr));gap:24px}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:2000;display:none;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.active{display:flex}
+.modal{background:var(--card-bg);border-radius:var(--radius);width:100%;max-width:600px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3);animation:modalSlide .3s ease}
+@keyframes modalSlide{from{opacity:0;transform:translateY(-20px)}to{opacity:1;transform:translateY(0)}}
+.modal-header{padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-size:1.1rem;font-weight:700}
+.modal-close{background:none;border:none;font-size:1.3rem;color:var(--text-light);cursor:pointer;width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center}
+.modal-close:hover{background:var(--bg)}
+.modal-body{padding:24px}
+.modal-footer{padding:16px 24px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px}
+.tabs{display:flex;gap:4px;border-bottom:2px solid var(--border);margin-bottom:20px}
+.tab{padding:12px 20px;font-size:.9rem;font-weight:600;color:var(--text-light);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .2s}
+.tab:hover{color:var(--primary)}
+.tab.active{color:var(--primary);border-bottom-color:var(--primary)}
+.page-section{display:none}
+.page-section.active{display:block}
+@media(max-width:1024px){.sidebar{transform:translateX(-100%)}.sidebar.open{transform:translateX(0)}.main-content{margin-left:0}.menu-toggle{display:block}.chart-row{grid-template-columns:1fr}}
+@media(max-width:768px){.content{padding:16px}.kpi-grid{grid-template-columns:1fr}.search-box input{width:160px}.card-header{flex-direction:column;align-items:flex-start;gap:12px}.topbar{padding:0 16px}.form-grid{grid-template-columns:1fr}}
+.fade-in{animation:fadeIn .4s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.toast-container{position:fixed;top:20px;right:20px;z-index:3000;display:flex;flex-direction:column;gap:10px}
+.toast{background:var(--card-bg);border-radius:10px;padding:14px 20px;box-shadow:var(--shadow-hover);display:flex;align-items:center;gap:12px;min-width:300px;animation:toastSlide .3s ease;border-left:4px solid var(--secondary)}
+.toast.error{border-left-color:var(--danger)}
+.toast.warning{border-left-color:var(--warning)}
+@keyframes toastSlide{from{opacity:0;transform:translateX(100%)}to{opacity:1;transform:translateX(0)}}
+.summary-box{background:linear-gradient(135deg,var(--primary) 0%,var(--primary-light) 100%);color:#fff;border-radius:var(--radius);padding:24px;margin-bottom:24px}
+.summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:20px}
+.summary-item h4{font-size:.8rem;opacity:.7;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.summary-item p{font-size:1.6rem;font-weight:700}
+.summary-item small{font-size:.8rem;opacity:.8}
+.filter-bar{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;align-items:center}
+.filter-bar .form-input,.filter-bar .form-select{width:auto;min-width:160px}
+.zakat-box{background:linear-gradient(135deg,#f8f4e8 0%,#f0e8d0 100%);border:1px solid #e8d9b0;border-radius:var(--radius);padding:20px;margin-top:20px;text-align:center}
+.zakat-box h3{color:#8b6914;font-size:1rem;margin-bottom:8px}
+.zakat-box p{color:#6b5a2e;font-size:.9rem}
+@media print{.sidebar,.topbar,.btn,.menu-toggle{display:none!important}.main-content{margin-left:0}.card{box-shadow:none;border:1px solid #ddd}}
+.empty-state{text-align:center;padding:60px 20px;color:var(--text-light)}
+.empty-state i{font-size:3rem;margin-bottom:16px;opacity:.3}
+.empty-state h3{font-size:1.1rem;margin-bottom:8px;color:var(--text)}
+</style>
+</head>
+<body>
+<nav class="sidebar" id="sidebar">
+<div class="sidebar-header">
+<h1><i class="fas fa-car-side"></i> GESTION LOCATION</h1>
+<p>Application de gestion quotidienne</p>
+</div>
+<div class="nav-menu">
+<div class="nav-item active" data-page="dashboard"><i class="fas fa-chart-line"></i><span>Tableau de Bord</span></div>
+<div class="nav-item" data-page="parc"><i class="fas fa-car"></i><span>Parc Auto</span></div>
+<div class="nav-item" data-page="locations"><i class="fas fa-handshake"></i><span>Locations</span></div>
+<div class="nav-item" data-page="charges"><i class="fas fa-file-invoice-dollar"></i><span>Charges</span></div>
+<div class="nav-item" data-page="personnel"><i class="fas fa-users"></i><span>Charges Personnel</span></div>
+<div class="nav-item" data-page="rapports"><i class="fas fa-chart-pie"></i><span>Rapports</span></div>
+<div class="nav-item" data-page="alertes"><i class="fas fa-bell"></i><span>Alertes</span><span class="nav-badge" id="alertBadge">9</span></div>
+</div>
+<div class="sidebar-footer"><i class="fas fa-database"></i> Mode Local (SQLite)<br><small>Pret pour MySQL</small></div>
+</nav>
+
+<div class="main-content">
+<header class="topbar">
+<div class="topbar-left">
+<button class="menu-toggle" id="menuToggle"><i class="fas fa-bars"></i></button>
+<h2 class="page-title" id="pageTitle">Tableau de Bord</h2>
+</div>
+<div class="topbar-right">
+<div class="search-box"><i class="fas fa-search"></i><input type="text" placeholder="Rechercher..." id="globalSearch"></div>
+<div class="user-avatar">AD</div>
+</div>
+</header>
+
+<main class="content">
+<!-- DASHBOARD -->
+<section class="page-section active fade-in" id="dashboard">
+<div class="kpi-grid">
+<div class="kpi-card blue"><div class="kpi-icon"><i class="fas fa-car"></i></div><div class="kpi-label">Voitures en Parc</div><div class="kpi-value" id="kpiVehicles">7</div><div class="kpi-change positive"><i class="fas fa-arrow-up"></i> Actives</div></div>
+<div class="kpi-card green"><div class="kpi-icon"><i class="fas fa-handshake"></i></div><div class="kpi-label">Locations Total</div><div class="kpi-value" id="kpiRentals">6</div><div class="kpi-change positive">Cette annee</div></div>
+<div class="kpi-card orange"><div class="kpi-icon"><i class="fas fa-exclamation-triangle"></i></div><div class="kpi-label">Alertes Actives</div><div class="kpi-value" id="kpiAlerts">9</div><div class="kpi-change negative">Documents expires</div></div>
+<div class="kpi-card purple"><div class="kpi-icon"><i class="fas fa-coins"></i></div><div class="kpi-label">Total Locations</div><div class="kpi-value" id="kpiRevenue">83,050 <small>DH</small></div><div class="kpi-change positive">Revenus</div></div>
+<div class="kpi-card red"><div class="kpi-icon"><i class="fas fa-file-invoice"></i></div><div class="kpi-label">Total Charges</div><div class="kpi-value" id="kpiCharges">40,950 <small>DH</small></div><div class="kpi-change negative">Depenses</div></div>
+<div class="kpi-card green"><div class="kpi-icon"><i class="fas fa-chart-line"></i></div><div class="kpi-label">Resultat Global</div><div class="kpi-value" id="kpiResult">42,100 <small>DH</small></div><div class="kpi-change positive"><i class="fas fa-arrow-up"></i> Benefice</div></div>
+</div>
+
+<div class="chart-row">
+<div class="card"><div class="card-header"><div class="card-title"><i class="fas fa-chart-bar"></i> Revenus vs Charges par Mois</div></div><div class="card-body"><div class="chart-container"><canvas id="revenueChart"></canvas></div></div></div>
+<div class="card"><div class="card-header"><div class="card-title"><i class="fas fa-chart-pie"></i> Repartition des Charges</div></div><div class="card-body"><div class="chart-container"><canvas id="chargesChart"></canvas></div></div></div>
+</div>
+
+<div class="card">
+<div class="card-header"><div class="card-title"><i class="fas fa-bell"></i> Alertes Prioritaires</div><button class="btn btn-sm btn-outline" onclick="navigateTo('alertes')">Voir tout</button></div>
+<div class="card-body" id="dashboardAlerts"></div>
+</div>
+</section>
+
+<!-- PARC AUTO -->
+<section class="page-section fade-in" id="parc">
+<div class="card">
+<div class="card-header"><div class="card-title"><i class="fas fa-car"></i> Parc Automobile</div><button class="btn btn-success" onclick="openModal('vehicleModal')"><i class="fas fa-plus"></i> Ajouter une Voiture</button></div>
+<div class="card-body">
+<div class="filter-bar">
+<input type="text" class="form-input" placeholder="Rechercher..." id="vehicleSearch" onkeyup="filterVehicles()">
+<select class="form-select" id="vehicleCategoryFilter" onchange="filterVehicles()">
+<option value="">Toutes categories</option><option value="Economique">Economique</option><option value="Compacte">Compacte</option><option value="Premium">Premium</option>
+</select>
+</div>
+<div class="table-responsive">
+<table class="data-table" id="vehiclesTable">
+<thead><tr><th>N</th><th>Marque</th><th>Modele</th><th>Immatriculation</th><th>Categorie</th><th>Prix/Jour</th><th>Assurance</th><th>Visite Tech.</th><th>Agrement</th><th>Actions</th></tr></thead>
+<tbody id="vehiclesBody"></tbody>
+</table>
+</div>
+</div>
+</div>
+</section>
+
+<!-- LOCATIONS -->
+<section class="page-section fade-in" id="locations">
+<div class="card">
+<div class="card-header"><div class="card-title"><i class="fas fa-handshake"></i> Locations Journalieres</div><button class="btn btn-success" onclick="openModal('rentalModal')"><i class="fas fa-plus"></i> Nouvelle Location</button></div>
+<div class="card-body">
+<div class="filter-bar">
+<input type="text" class="form-input" placeholder="Rechercher client/voiture..." id="rentalSearch" onkeyup="filterRentals()">
+<select class="form-select" id="rentalPaymentFilter" onchange="filterRentals()">
+<option value="">Tous paiements</option><option value="Especes">Especes</option><option value="Carte">Carte</option><option value="Virement">Virement</option>
+</select>
+</div>
+<div class="table-responsive">
+<table class="data-table" id="rentalsTable">
+<thead><tr><th>N</th><th>Date</th><th>Voiture</th><th>Client</th><th>Debut</th><th>Fin</th><th>Jours</th><th>Prix/Jour</th><th>Total</th><th>Paiement</th><th>Actions</th></tr></thead>
+<tbody id="rentalsBody"></tbody>
+</table>
+</div>
+<div style="margin-top:16px;text-align:right;font-size:1.1rem;font-weight:700;color:var(--primary)">TOTAL = <span id="rentalsTotal">83,050</span> DH</div>
+</div>
+</div>
+</section>
+
+<!-- CHARGES -->
+<section class="page-section fade-in" id="charges">
+<div class="tabs">
+<div class="tab active" onclick="switchChargeTab('fixes')">Charges Fixes</div>
+<div class="tab" onclick="switchChargeTab('variables')">Charges Variables</div>
+</div>
+<div id="chargesFixesPanel" class="charge-panel">
+<div class="card">
+<div class="card-header"><div class="card-title"><i class="fas fa-file-invoice-dollar"></i> Charges Fixes</div><button class="btn btn-success" onclick="openModal('fixedChargeModal')"><i class="fas fa-plus"></i> Ajouter</button></div>
+<div class="card-body">
+<div class="table-responsive">
+<table class="data-table" id="fixedChargesTable">
+<thead><tr><th>N</th><th>Date</th><th>Voiture</th><th>Type</th><th>Montant (DH)</th><th>Periode</th><th>Mois</th><th>Actions</th></tr></thead>
+<tbody id="fixedChargesBody"></tbody>
+</table>
+</div>
+<div style="margin-top:16px;text-align:right;font-size:1.1rem;font-weight:700;color:var(--primary)">TOTAL = <span id="fixedChargesTotal">6,500</span> DH</div>
+</div>
+</div>
+</div>
+<div id="chargesVariablesPanel" class="charge-panel" style="display:none">
+<div class="card">
+<div class="card-header"><div class="card-title"><i class="fas fa-tools"></i> Charges Variables</div><button class="btn btn-success" onclick="openModal('variableChargeModal')"><i class="fas fa-plus"></i> Ajouter</button></div>
+<div class="card-body">
+<div class="table-responsive">
+<table class="data-table" id="variableChargesTable">
+<thead><tr><th>N</th><th>Date</th><th>Voiture</th><th>Type</th><th>Montant (DH)</th><th>Description</th><th>Actions</th></tr></thead>
+<tbody id="variableChargesBody"></tbody>
+</table>
+</div>
+<div style="margin-top:16px;text-align:right;font-size:1.1rem;font-weight:700;color:var(--primary)">TOTAL = <span id="variableChargesTotal">6,650</span> DH</div>
+</div>
+</div>
+</div>
+</section>
+
+<!-- PERSONNEL -->
+<section class="page-section fade-in" id="personnel">
+<div class="card">
+<div class="card-header"><div class="card-title"><i class="fas fa-users"></i> Charges Personnel</div><button class="btn btn-success" onclick="openModal('personnelModal')"><i class="fas fa-plus"></i> Ajouter</button></div>
+<div class="card-body">
+<div class="table-responsive">
+<table class="data-table" id="personnelTable">
+<thead><tr><th>N</th><th>Date</th><th>Montant (DH)</th><th>Description</th><th>Actions</th></tr></thead>
+<tbody id="personnelBody"></tbody>
+</table>
+</div>
+<div style="margin-top:16px;text-align:right;font-size:1.1rem;font-weight:700;color:var(--primary)">TOTAL = <span id="personnelTotal">27,800</span> DH</div>
+</div>
+</div>
+</section>
+
+<!-- RAPPORTS -->
+<section class="page-section fade-in" id="rapports">
+<div class="summary-box">
+<div class="summary-grid">
+<div class="summary-item"><h4>Total Ventes</h4><p id="reportRevenue">83,050 DH</p><small>Revenus locations annuels</small></div>
+<div class="summary-item"><h4>Charges Fixes</h4><p id="reportFixed">6,500 DH</p><small>Assurance, taxe, visite...</small></div>
+<div class="summary-item"><h4>Charges Variables</h4><p id="reportVariable">6,650 DH</p><small>Pieces, main d oeuvre...</small></div>
+<div class="summary-item"><h4>Charges Personnel</h4><p id="reportPersonnel">27,800 DH</p><small>Salaires et consommation</small></div>
+<div class="summary-item"><h4>Total Charges</h4><p id="reportTotalCharges">40,950 DH</p><small>Toutes charges confondues</small></div>
+<div class="summary-item"><h4>Resultat Net</h4><p id="reportNet">42,100 DH</p><small>Benefice annuel</small></div>
+</div>
+</div>
+
+<div class="card">
+<div class="card-header"><div class="card-title"><i class="fas fa-calendar-alt"></i> Bilan Mensuel - 2026</div>
+<select class="form-select" id="reportMonthSelect" onchange="updateMonthlyReport()" style="width:auto">
+<option value="0">Janvier</option><option value="1">Fevrier</option><option value="2">Mars</option><option value="3">Avril</option><option value="4">Mai</option><option value="5">Juin</option><option value="6">Juillet</option><option value="7">Aout</option><option value="8">Septembre</option><option value="9">Octobre</option><option value="10">Novembre</option><option value="11">Decembre</option>
+</select>
+</div>
+<div class="card-body">
+<div class="chart-container"><canvas id="monthlyChart"></canvas></div>
+<div class="table-responsive" style="margin-top:24px">
+<table class="data-table" id="monthlyReportTable">
+<thead><tr><th>Mois</th><th>Revenus</th><th>Charges Fixes</th><th>Charges Variables</th><th>Charges Personnel</th><th>Total Charges</th><th>Resultat</th></tr></thead>
+<tbody id="monthlyReportBody"></tbody>
+</table>
+</div>
+<div class="zakat-box">
+<h3><i class="fas fa-mosque"></i> Zakat = Nissab (85 gr d Or)</h3>
+<p>Apres accomplissement du Nissab et passage du Hawl sur la date d accomplissement, le contribuable sort un quart du dixieme (2,5%)</p>
+<p style="margin-top:8px;font-weight:700;font-size:1.1rem">Zakat estimee: <span id="zakatAmount">1,052.50</span> DH</p>
+</div>
+</div>
+</div>
+</section>
+
+<!-- ALERTES -->
+<section class="page-section fade-in" id="alertes">
+<div class="card">
+<div class="card-header"><div class="card-title"><i class="fas fa-bell"></i> Alertes Documents</div>
+<div style="display:flex;gap:10px">
+<button class="btn btn-sm btn-outline" onclick="filterAlerts('all')">Tous</button>
+<button class="btn btn-sm btn-outline" onclick="filterAlerts('expired')">Expires</button>
+<button class="btn btn-sm btn-outline" onclick="filterAlerts('renew')">A renouveler</button>
+</div>
+</div>
+<div class="card-body" id="alertsContainer"></div>
+</div>
+<div class="card">
+<div class="card-header"><div class="card-title"><i class="fas fa-table"></i> Recapitulatif par Document</div></div>
+<div class="card-body">
+<div class="table-responsive">
+<table class="data-table" id="alertsSummaryTable">
+<thead><tr><th>Document</th><th>Total</th><th>Expires</th><th>A renouveler</th><th>OK</th></tr></thead>
+<tbody id="alertsSummaryBody"></tbody>
+</table>
+</div>
+</div>
+</div>
+</section>
+</main>
+</div>
+<!-- MODALS -->
+<div class="modal-overlay" id="vehicleModal">
+<div class="modal">
+<div class="modal-header"><div class="modal-title"><i class="fas fa-car"></i> Ajouter / Modifier Voiture</div><button class="modal-close" onclick="closeModal('vehicleModal')"><i class="fas fa-times"></i></button></div>
+<div class="modal-body">
+<form id="vehicleForm" class="form-grid">
+<div class="form-group"><label class="form-label">Marque</label><input type="text" class="form-input" id="vMarque" required></div>
+<div class="form-group"><label class="form-label">Modele</label><input type="text" class="form-input" id="vModele" required></div>
+<div class="form-group"><label class="form-label">Immatriculation</label><input type="text" class="form-input" id="vImmat" required></div>
+<div class="form-group"><label class="form-label">Categorie</label><select class="form-select" id="vCategorie"><option value="Economique">Economique</option><option value="Compacte">Compacte</option><option value="Premium">Premium</option></select></div>
+<div class="form-group"><label class="form-label">Prix/Jour (DH)</label><input type="number" class="form-input" id="vPrix" required></div>
+<div class="form-group"><label class="form-label">Date Assurance</label><input type="date" class="form-input" id="vAssurance"></div>
+<div class="form-group"><label class="form-label">Date Visite Technique</label><input type="date" class="form-input" id="vVisite"></div>
+<div class="form-group"><label class="form-label">Date Agrement</label><input type="date" class="form-input" id="vAgrement"></div>
+</form>
+</div>
+<div class="modal-footer"><button class="btn btn-outline" onclick="closeModal('vehicleModal')">Annuler</button><button class="btn btn-success" onclick="saveVehicle()">Enregistrer</button></div>
+</div>
+</div>
+
+<div class="modal-overlay" id="rentalModal">
+<div class="modal">
+<div class="modal-header"><div class="modal-title"><i class="fas fa-handshake"></i> Nouvelle Location</div><button class="modal-close" onclick="closeModal('rentalModal')"><i class="fas fa-times"></i></button></div>
+<div class="modal-body">
+<form id="rentalForm" class="form-grid">
+<div class="form-group"><label class="form-label">Date</label><input type="date" class="form-input" id="rDate" required></div>
+<div class="form-group"><label class="form-label">Voiture</label><select class="form-select" id="rVoiture" required></select></div>
+<div class="form-group"><label class="form-label">Client</label><input type="text" class="form-input" id="rClient" required></div>
+<div class="form-group"><label class="form-label">Date Debut</label><input type="date" class="form-input" id="rDebut" required onchange="calculateRental()"></div>
+<div class="form-group"><label class="form-label">Date Fin</label><input type="date" class="form-input" id="rFin" required onchange="calculateRental()"></div>
+<div class="form-group"><label class="form-label">Jours</label><input type="number" class="form-input" id="rJours" readonly></div>
+<div class="form-group"><label class="form-label">Prix/Jour (DH)</label><input type="number" class="form-input" id="rPrix" required onchange="calculateRental()"></div>
+<div class="form-group"><label class="form-label">Total (DH)</label><input type="number" class="form-input" id="rTotal" readonly style="font-weight:700;color:var(--primary)"></div>
+<div class="form-group"><label class="form-label">Mode de Paiement</label><select class="form-select" id="rPaiement"><option value="Especes">Especes</option><option value="Carte">Carte</option><option value="Virement">Virement</option></select></div>
+</form>
+</div>
+<div class="modal-footer"><button class="btn btn-outline" onclick="closeModal('rentalModal')">Annuler</button><button class="btn btn-success" onclick="saveRental()">Enregistrer</button></div>
+</div>
+</div>
+
+<div class="modal-overlay" id="fixedChargeModal">
+<div class="modal">
+<div class="modal-header"><div class="modal-title"><i class="fas fa-file-invoice-dollar"></i> Charge Fixe</div><button class="modal-close" onclick="closeModal('fixedChargeModal')"><i class="fas fa-times"></i></button></div>
+<div class="modal-body">
+<form id="fixedChargeForm" class="form-grid">
+<div class="form-group"><label class="form-label">Date</label><input type="date" class="form-input" id="cfDate" required></div>
+<div class="form-group"><label class="form-label">Voiture</label><select class="form-select" id="cfVoiture"><option value="">-- Selectionner --</option></select></div>
+<div class="form-group"><label class="form-label">Type de Charge</label><select class="form-select" id="cfType"><option value="Assurance">Assurance</option><option value="Taxe">Taxe</option><option value="Visite Technique">Visite Technique</option><option value="Leasing">Leasing</option><option value="GPS">GPS</option></select></div>
+<div class="form-group"><label class="form-label">Montant (DH)</label><input type="number" class="form-input" id="cfMontant" required></div>
+<div class="form-group"><label class="form-label">Periode</label><select class="form-select" id="cfPeriode"><option value="Mensuelle">Mensuelle</option><option value="Trimestrielle">Trimestrielle</option><option value="Semestrielle">Semestrielle</option><option value="Annuelle">Annuelle</option></select></div>
+<div class="form-group"><label class="form-label">Mois concerne</label><input type="text" class="form-input" id="cfMois"></div>
+</form>
+</div>
+<div class="modal-footer"><button class="btn btn-outline" onclick="closeModal('fixedChargeModal')">Annuler</button><button class="btn btn-success" onclick="saveFixedCharge()">Enregistrer</button></div>
+</div>
+</div>
+
+<div class="modal-overlay" id="variableChargeModal">
+<div class="modal">
+<div class="modal-header"><div class="modal-title"><i class="fas fa-tools"></i> Charge Variable</div><button class="modal-close" onclick="closeModal('variableChargeModal')"><i class="fas fa-times"></i></button></div>
+<div class="modal-body">
+<form id="variableChargeForm" class="form-grid">
+<div class="form-group"><label class="form-label">Date</label><input type="date" class="form-input" id="cvDate" required></div>
+<div class="form-group"><label class="form-label">Voiture</label><select class="form-select" id="cvVoiture"><option value="">-- Selectionner --</option></select></div>
+<div class="form-group"><label class="form-label">Type</label><select class="form-select" id="cvType"><option value="Pieces Rechange">Pieces Rechange</option><option value="Main d Oeuvre">Main d Oeuvre</option><option value="Autre">Autre</option></select></div>
+<div class="form-group"><label class="form-label">Montant (DH)</label><input type="number" class="form-input" id="cvMontant" required></div>
+<div class="form-group" style="grid-column:1/-1"><label class="form-label">Description</label><input type="text" class="form-input" id="cvDescription"></div>
+</form>
+</div>
+<div class="modal-footer"><button class="btn btn-outline" onclick="closeModal('variableChargeModal')">Annuler</button><button class="btn btn-success" onclick="saveVariableCharge()">Enregistrer</button></div>
+</div>
+</div>
+
+<div class="modal-overlay" id="personnelModal">
+<div class="modal">
+<div class="modal-header"><div class="modal-title"><i class="fas fa-users"></i> Charge Personnel</div><button class="modal-close" onclick="closeModal('personnelModal')"><i class="fas fa-times"></i></button></div>
+<div class="modal-body">
+<form id="personnelForm" class="form-grid">
+<div class="form-group"><label class="form-label">Date</label><input type="date" class="form-input" id="pDate" required></div>
+<div class="form-group"><label class="form-label">Montant (DH)</label><input type="number" class="form-input" id="pMontant" required></div>
+<div class="form-group" style="grid-column:1/-1"><label class="form-label">Description</label><input type="text" class="form-input" id="pDescription"></div>
+</form>
+</div>
+<div class="modal-footer"><button class="btn btn-outline" onclick="closeModal('personnelModal')">Annuler</button><button class="btn btn-success" onclick="savePersonnel()">Enregistrer</button></div>
+</div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+// ===================== DATA STORE =====================
+const store = {
+vehicles:[
+{id:1,marque:'SEAT',modele:'IBIZA',immat:'12345-A-6',categorie:'Compacte',prixJour:400,assurance:'2026-07-15',visite:'2026-05-30',agrement:'2026-02-20'},
+{id:2,marque:'PEUGEOT',modele:'208 NOIR',immat:'23456-B-7',categorie:'Compacte',prixJour:300,assurance:'2026-09-21',visite:'2026-06-10',agrement:'2026-03-28'},
+{id:3,marque:'PEUGEOT',modele:'208 GRIS',immat:'34567-C-8',categorie:'Compacte',prixJour:300,assurance:'2026-04-26',visite:'2026-07-02',agrement:'2026-01-22'},
+{id:4,marque:'DACIA',modele:'LOGANE NOIR',immat:'45678-D-9',categorie:'Economique',prixJour:250,assurance:'2026-10-11',visite:'2026-08-14',agrement:'2026-04-01'},
+{id:5,marque:'DACIA',modele:'SANDERO',immat:'56789-E-0',categorie:'Economique',prixJour:250,assurance:'2026-12-04',visite:'2026-09-21',agrement:'2026-04-22'},
+{id:6,marque:'HYUNDAI',modele:'I-30',immat:'022A07',categorie:'Compacte',prixJour:500,assurance:'2026-08-19',visite:'2026-06-08',agrement:'2028-04-23'},
+{id:7,marque:'MERCEDES',modele:'C220',immat:'2555A40',categorie:'Premium',prixJour:1200,assurance:'2026-11-17',visite:'2026-11-09',agrement:'2026-12-09'}
+],
+rentals:[
+{id:1,date:'2026-01-02',voiture:'208 NOIR',client:'Ahmed Benali',debut:'2026-01-02',fin:'2026-09-25',jours:276,prixJour:250,total:69000,paiement:'Especes'},
+{id:2,date:'2026-01-05',voiture:'208 GRIS',client:'Fatima Zahra',debut:'2026-01-05',fin:'2026-01-09',jours:5,prixJour:350,total:1750,paiement:'Carte'},
+{id:3,date:'2026-01-07',voiture:'LOGANE NOIR',client:'Karim Idrissi',debut:'2026-01-07',fin:'2026-01-12',jours:6,prixJour:400,total:2400,paiement:'Virement'},
+{id:4,date:'2026-01-12',voiture:'IBIZA',client:'Sara Moussaoui',debut:'2026-01-12',fin:'2026-01-15',jours:4,prixJour:450,total:1800,paiement:'Especes'},
+{id:5,date:'2026-01-15',voiture:'SANDERO',client:'Youssef Alami',debut:'2026-01-15',fin:'2026-01-22',jours:8,prixJour:700,total:5600,paiement:'Carte'},
+{id:6,date:'2026-01-29',voiture:'I-30',client:'Laila Bennani',debut:'2026-01-29',fin:'2026-02-07',jours:10,prixJour:250,total:2500,paiement:'Especes'}
+],
+fixedCharges:[
+{id:1,date:'2026-01-02',voiture:'Renault Clio',type:'Assurance',montant:4500,periode:'Trimestrielle',mois:'Janvier'},
+{id:2,date:'2026-01-29',voiture:'208 NOIR',type:'Taxe',montant:2000,periode:'Mensuelle',mois:'janvier'}
+],
+variableCharges:[
+{id:1,date:'2026-01-09',voiture:'Renault Clio',type:'Pieces Rechange',montant:850,description:'Remplacement disques de frein'},
+{id:2,date:'2026-01-15',voiture:'Peugeot 308',type:'Main d Oeuvre',montant:400,description:'Revision 10 000 km'},
+{id:3,date:'2026-02-02',voiture:'Dacia Duster',type:'Pieces Rechange',montant:1200,description:'Changement amortisseurs arriere'},
+{id:4,date:'2026-03-02',voiture:'Peugeot 308',type:'Autre',montant:250,description:'Lavage interieur complet'},
+{id:5,date:'2026-04-02',voiture:'',type:'Pieces Rechange',montant:2100,description:'Remplacement turbo'},
+{id:6,date:'2026-06-02',voiture:'',type:'Main d Oeuvre',montant:350,description:'Changement huile et filtres'},
+{id:7,date:'2026-06-03',voiture:'',type:'Autre',montant:180,description:'Nettoyage climatisation'},
+{id:8,date:'2026-09-25',voiture:'',type:'Pieces Rechange',montant:650,description:'Remplacement plaquettes AV'},
+{id:9,date:'2026-10-26',voiture:'',type:'Main d Oeuvre',montant:550,description:'Reparation electricite'},
+{id:10,date:'2026-11-26',voiture:'',type:'Autre',montant:120,description:'Recharge climatisation'}
+],
+personnel:[
+{id:1,date:'2026-01-28',montant:2500,description:'SOKHRA DAR'},
+{id:2,date:'2026-02-25',montant:1800,description:'LEHWAYEJ'},
+{id:3,date:'2026-05-25',montant:2500,description:'LISSANSS MOTOR'},
+{id:4,date:'2026-05-29',montant:2000,description:'TEST 1'},
+{id:5,date:'2026-06-29',montant:2000,description:'TEST 1'},
+{id:6,date:'2026-07-30',montant:2000,description:'TEST 1'},
+{id:7,date:'2026-08-30',montant:2000,description:'TEST 1'},
+{id:8,date:'2026-09-30',montant:5000,description:'TEST 1'},
+{id:9,date:'2026-10-31',montant:3000,description:'TEST 1'},
+{id:10,date:'2026-12-01',montant:5000,description:'TEST 1'}
+],
+alerts:[
+{id:1,voiture:'Renault Clio',document:'Assurance',expiration:'2026-07-15',jours:2,statut:'A RENOUVELER'},
+{id:2,voiture:'Renault Clio',document:'Visite Technique',expiration:'2026-05-30',jours:-54,statut:'EXPIRE'},
+{id:3,voiture:'Renault Clio',document:'Agrement',expiration:'2026-02-20',jours:-154,statut:'EXPIRE'},
+{id:4,voiture:'Peugeot 308',document:'Assurance',expiration:'2026-09-21',jours:70,statut:'OK'},
+{id:5,voiture:'Peugeot 308',document:'Visite Technique',expiration:'2026-06-10',jours:-34,statut:'EXPIRE'},
+{id:6,voiture:'Peugeot 308',document:'Agrement',expiration:'2026-03-28',jours:-118,statut:'EXPIRE'},
+{id:7,voiture:'Dacia Duster',document:'Assurance',expiration:'2026-04-26',jours:-75,statut:'EXPIRE'},
+{id:8,voiture:'Dacia Duster',document:'Visite Technique',expiration:'2026-07-02',jours:-8,statut:'EXPIRE'},
+{id:9,voiture:'Dacia Duster',document:'Agrement',expiration:'2026-01-22',jours:-194,statut:'EXPIRE'},
+{id:10,voiture:'VW Passat',document:'Assurance',expiration:'2026-10-11',jours:91,statut:'OK'},
+{id:11,voiture:'VW Passat',document:'Visite Technique',expiration:'2026-08-14',jours:35,statut:'OK'},
+{id:12,voiture:'VW Passat',document:'Agrement',expiration:'2026-04-01',jours:-85,statut:'EXPIRE'},
+{id:13,voiture:'Mercedes Classe C',document:'Assurance',expiration:'2026-11-17',jours:145,statut:'OK'},
+{id:14,voiture:'Mercedes Classe C',document:'Visite Technique',expiration:'2026-11-09',jours:137,statut:'OK'},
+{id:15,voiture:'Mercedes Classe C',document:'Agrement',expiration:'2026-12-09',jours:167,statut:'OK'}
+],
+monthlyData:[
+{mois:'Janvier',revenus:80550,chargesFixes:4500,chargesVariables:1250,chargesPersonnel:2500},
+{mois:'Fevrier',revenus:2500,chargesFixes:2000,chargesVariables:1200,chargesPersonnel:1800},
+{mois:'Mars',revenus:0,chargesFixes:0,chargesVariables:250,chargesPersonnel:0},
+{mois:'Avril',revenus:0,chargesFixes:0,chargesVariables:2100,chargesPersonnel:0},
+{mois:'Mai',revenus:0,chargesFixes:0,chargesVariables:0,chargesPersonnel:2500},
+{mois:'Juin',revenus:0,chargesFixes:0,chargesVariables:530,chargesPersonnel:2000},
+{mois:'Juillet',revenus:0,chargesFixes:0,chargesVariables:0,chargesPersonnel:2000},
+{mois:'Aout',revenus:0,chargesFixes:0,chargesVariables:0,chargesPersonnel:2000},
+{mois:'Septembre',revenus:0,chargesFixes:0,chargesVariables:0,chargesPersonnel:2000},
+{mois:'Octobre',revenus:0,chargesFixes:0,chargesVariables:650,chargesPersonnel:5000},
+{mois:'Novembre',revenus:0,chargesFixes:0,chargesVariables:550,chargesPersonnel:3000},
+{mois:'Decembre',revenus:0,chargesFixes:0,chargesVariables:120,chargesPersonnel:5000}
+]
+};
+
+let currentEditingId=null;
+let revenueChartInstance=null;
+let chargesChartInstance=null;
+let monthlyChartInstance=null;
+
+// ===================== UTILITIES =====================
+function formatNumber(n){return n.toLocaleString('fr-FR')}
+function formatDate(d){if(!d)return'-';const dt=new Date(d);return dt.toLocaleDateString('fr-FR')}
+function showToast(msg,type='success'){
+const container=document.getElementById('toastContainer');
+const toast=document.createElement('div');
+toast.className='toast '+type;
+toast.innerHTML='<i class="fas fa-'+(type==='success'?'check-circle':type==='error'?'times-circle':'exclamation-circle')+'"></i><span>'+msg+'</span>';
+container.appendChild(toast);
+setTimeout(()=>toast.remove(),3000);
+}
+function openModal(id){document.getElementById(id).classList.add('active');currentEditingId=null;}
+function closeModal(id){document.getElementById(id).classList.remove('active');document.querySelector('#'+id+' form').reset();currentEditingId=null;}
+
+// ===================== NAVIGATION =====================
+document.querySelectorAll('.nav-item').forEach(item=>{
+item.addEventListener('click',()=>{
+document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+item.classList.add('active');
+const page=item.dataset.page;
+document.querySelectorAll('.page-section').forEach(s=>s.classList.remove('active'));
+document.getElementById(page).classList.add('active');
+const titles={dashboard:'Tableau de Bord',parc:'Parc Auto',locations:'Locations',charges:'Charges',personnel:'Charges Personnel',rapports:'Rapports',alertes:'Alertes'};
+document.getElementById('pageTitle').textContent=titles[page];
+document.getElementById('sidebar').classList.remove('open');
+if(page==='dashboard'){initDashboardCharts();}
+if(page==='rapports'){initMonthlyChart();renderMonthlyReport();}
+});
+});
+function navigateTo(page){document.querySelector('[data-page="'+page+'"]').click();}
+document.getElementById('menuToggle').addEventListener('click',()=>{
+document.getElementById('sidebar').classList.toggle('open');
+});
+
+// ===================== VEHICLES =====================
+function renderVehicles(data=store.vehicles){
+const tbody=document.getElementById('vehiclesBody');
+tbody.innerHTML=data.map(v=>{
+const today=new Date('2026-06-14');
+const ass=new Date(v.assurance);const vis=new Date(v.visite);const agr=new Date(v.agrement);
+const assDays=Math.ceil((ass-today)/(1000*60*60*24));
+const visDays=Math.ceil((vis-today)/(1000*60*60*24));
+const agrDays=Math.ceil((agr-today)/(1000*60*60*24));
+return '<tr><td>'+v.id+'</td><td><strong>'+v.marque+'</strong></td><td>'+v.modele+'</td><td>'+v.immat+'</td><td><span class="badge badge-'+(v.categorie==='Premium'?'warning':v.categorie==='Compacte'?'info':'success')+'">'+v.categorie+'</span></td><td><strong>'+formatNumber(v.prixJour)+' DH</strong></td><td>'+formatDate(v.assurance)+'<br><small style="color:'+(assDays<30?'var(--danger)':assDays<90?'var(--warning)':'var(--secondary)')+'">'+assDays+' jours</small></td><td>'+formatDate(v.visite)+'<br><small style="color:'+(visDays<30?'var(--danger)':visDays<90?'var(--warning)':'var(--secondary)')+'">'+visDays+' jours</small></td><td>'+formatDate(v.agrement)+'<br><small style="color:'+(agrDays<30?'var(--danger)':agrDays<90?'var(--warning)':'var(--secondary)')+'">'+agrDays+' jours</small></td><td><button class="btn btn-sm btn-icon btn-outline" onclick="editVehicle('+v.id+')"><i class="fas fa-edit"></i></button> <button class="btn btn-sm btn-icon btn-outline" style="color:var(--danger);border-color:rgba(220,53,69,0.3)" onclick="deleteVehicle('+v.id+')"><i class="fas fa-trash"></i></button></td></tr>';
+}).join('');
+document.getElementById('kpiVehicles').textContent=store.vehicles.length;
+updateVehicleSelects();
+}
+function filterVehicles(){
+const search=document.getElementById('vehicleSearch').value.toLowerCase();
+const cat=document.getElementById('vehicleCategoryFilter').value;
+const filtered=store.vehicles.filter(v=>{
+const matchSearch=(v.marque+' '+v.modele+' '+v.immat).toLowerCase().includes(search);
+const matchCat=!cat||v.categorie===cat;
+return matchSearch&&matchCat;
+});
+renderVehicles(filtered);
+}
+function updateVehicleSelects(){
+const opts=store.vehicles.map(v=>'<option value="'+v.modele+'">'+v.marque+' '+v.modele+'</option>').join('');
+['rVoiture','cfVoiture','cvVoiture'].forEach(id=>{
+const el=document.getElementById(id);
+if(el)el.innerHTML='<option value="">-- Selectionner --</option>'+opts;
+});
+}
+function saveVehicle(){
+const marque=document.getElementById('vMarque').value;
+const modele=document.getElementById('vModele').value;
+const immat=document.getElementById('vImmat').value;
+const categorie=document.getElementById('vCategorie').value;
+const prixJour=parseFloat(document.getElementById('vPrix').value);
+const assurance=document.getElementById('vAssurance').value;
+const visite=document.getElementById('vVisite').value;
+const agrement=document.getElementById('vAgrement').value;
+if(!marque||!modele||!immat||!prixJour){showToast('Veuillez remplir tous les champs obligatoires','error');return;}
+if(currentEditingId){
+const idx=store.vehicles.findIndex(v=>v.id===currentEditingId);
+store.vehicles[idx]={id:currentEditingId,marque,modele,immat,categorie,prixJour,assurance,visite,agrement};
+showToast('Voiture modifiee avec succes');
+}else{
+const newId=Math.max(...store.vehicles.map(v=>v.id),0)+1;
+store.vehicles.push({id:newId,marque,modele,immat,categorie,prixJour,assurance,visite,agrement});
+showToast('Voiture ajoutee avec succes');
+}
+closeModal('vehicleModal');
+renderVehicles();
+}
+function editVehicle(id){
+const v=store.vehicles.find(x=>x.id===id);
+if(!v)return;
+currentEditingId=id;
+document.getElementById('vMarque').value=v.marque;
+document.getElementById('vModele').value=v.modele;
+document.getElementById('vImmat').value=v.immat;
+document.getElementById('vCategorie').value=v.categorie;
+document.getElementById('vPrix').value=v.prixJour;
+document.getElementById('vAssurance').value=v.assurance;
+document.getElementById('vVisite').value=v.visite;
+document.getElementById('vAgrement').value=v.agrement;
+openModal('vehicleModal');
+}
+function deleteVehicle(id){
+if(!confirm('Supprimer cette voiture ?'))return;
+store.vehicles=store.vehicles.filter(v=>v.id!==id);
+renderVehicles();
+showToast('Voiture supprimee');
+}
+
+// ===================== RENTALS =====================
+function renderRentals(data=store.rentals){
+const tbody=document.getElementById('rentalsBody');
+tbody.innerHTML=data.map(r=>'<tr><td>'+r.id+'</td><td>'+formatDate(r.date)+'</td><td><strong>'+r.voiture+'</strong></td><td>'+r.client+'</td><td>'+formatDate(r.debut)+'</td><td>'+formatDate(r.fin)+'</td><td>'+r.jours+'</td><td>'+formatNumber(r.prixJour)+' DH</td><td><strong style="color:var(--primary)">'+formatNumber(r.total)+' DH</strong></td><td><span class="badge badge-'+(r.paiement==='Especes'?'success':r.paiement==='Carte'?'info':'warning')+'">'+r.paiement+'</span></td><td><button class="btn btn-sm btn-icon btn-outline" onclick="editRental('+r.id+')"><i class="fas fa-edit"></i></button> <button class="btn btn-sm btn-icon btn-outline" style="color:var(--danger);border-color:rgba(220,53,69,0.3)" onclick="deleteRental('+r.id+')"><i class="fas fa-trash"></i></button></td></tr>').join('');
+const total=store.rentals.reduce((s,r)=>s+r.total,0);
+document.getElementById('rentalsTotal').textContent=formatNumber(total);
+document.getElementById('kpiRentals').textContent=store.rentals.length;
+document.getElementById('kpiRevenue').innerHTML=formatNumber(total)+' <small>DH</small>';
+}
+function filterRentals(){
+const search=document.getElementById('rentalSearch').value.toLowerCase();
+const pay=document.getElementById('rentalPaymentFilter').value;
+const filtered=store.rentals.filter(r=>{
+const matchSearch=(r.client+' '+r.voiture).toLowerCase().includes(search);
+const matchPay=!pay||r.paiement===pay;
+return matchSearch&&matchPay;
+});
+renderRentals(filtered);
+}
+function calculateRental(){
+const debut=document.getElementById('rDebut').value;
+const fin=document.getElementById('rFin').value;
+const prix=parseFloat(document.getElementById('rPrix').value)||0;
+if(debut&&fin){
+const d1=new Date(debut);const d2=new Date(fin);
+const diff=Math.ceil((d2-d1)/(1000*60*60*24));
+document.getElementById('rJours').value=diff>0?diff:0;
+document.getElementById('rTotal').value=diff>0?diff*prix:0;
+}
+}
+function saveRental(){
+const date=document.getElementById('rDate').value;
+const voiture=document.getElementById('rVoiture').value;
+const client=document.getElementById('rClient').value;
+const debut=document.getElementById('rDebut').value;
+const fin=document.getElementById('rFin').value;
+const jours=parseInt(document.getElementById('rJours').value)||0;
+const prixJour=parseFloat(document.getElementById('rPrix').value)||0;
+const total=parseFloat(document.getElementById('rTotal').value)||0;
+const paiement=document.getElementById('rPaiement').value;
+if(!date||!voiture||!client||!debut||!fin||!prixJour){showToast('Veuillez remplir tous les champs obligatoires','error');return;}
+if(currentEditingId){
+const idx=store.rentals.findIndex(r=>r.id===currentEditingId);
+store.rentals[idx]={id:currentEditingId,date,voiture,client,debut,fin,jours,prixJour,total,paiement};
+showToast('Location modifiee avec succes');
+}else{
+const newId=Math.max(...store.rentals.map(r=>r.id),0)+1;
+store.rentals.push({id:newId,date,voiture,client,debut,fin,jours,prixJour,total,paiement});
+showToast('Location enregistree avec succes');
+}
+closeModal('rentalModal');
+renderRentals();
+updateKPIs();
+}
+function editRental(id){
+const r=store.rentals.find(x=>x.id===id);
+if(!r)return;
+currentEditingId=id;
+document.getElementById('rDate').value=r.date;
+document.getElementById('rVoiture').value=r.voiture;
+document.getElementById('rClient').value=r.client;
+document.getElementById('rDebut').value=r.debut;
+document.getElementById('rFin').value=r.fin;
+document.getElementById('rJours').value=r.jours;
+document.getElementById('rPrix').value=r.prixJour;
+document.getElementById('rTotal').value=r.total;
+document.getElementById('rPaiement').value=r.paiement;
+openModal('rentalModal');
+}
+function deleteRental(id){
+if(!confirm('Supprimer cette location ?'))return;
+store.rentals=store.rentals.filter(r=>r.id!==id);
+renderRentals();
+showToast('Location supprimee');
+updateKPIs();
+}
+
+// ===================== CHARGES =====================
+function switchChargeTab(tab){
+document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+event.target.classList.add('active');
+document.getElementById('chargesFixesPanel').style.display=tab==='fixes'?'block':'none';
+document.getElementById('chargesVariablesPanel').style.display=tab==='variables'?'block':'none';
+}
+function renderFixedCharges(data=store.fixedCharges){
+const tbody=document.getElementById('fixedChargesBody');
+tbody.innerHTML=data.map(c=>'<tr><td>'+c.id+'</td><td>'+formatDate(c.date)+'</td><td>'+c.voiture+'</td><td>'+c.type+'</td><td><strong>'+formatNumber(c.montant)+' DH</strong></td><td>'+c.periode+'</td><td>'+c.mois+'</td><td><button class="btn btn-sm btn-icon btn-outline" onclick="editFixedCharge('+c.id+')"><i class="fas fa-edit"></i></button> <button class="btn btn-sm btn-icon btn-outline" style="color:var(--danger);border-color:rgba(220,53,69,0.3)" onclick="deleteFixedCharge('+c.id+')"><i class="fas fa-trash"></i></button></td></tr>').join('');
+const total=store.fixedCharges.reduce((s,c)=>s+c.montant,0);
+document.getElementById('fixedChargesTotal').textContent=formatNumber(total);
+}
+function renderVariableCharges(data=store.variableCharges){
+const tbody=document.getElementById('variableChargesBody');
+tbody.innerHTML=data.map(c=>'<tr><td>'+c.id+'</td><td>'+formatDate(c.date)+'</td><td>'+(c.voiture||'-')+'</td><td>'+c.type+'</td><td><strong>'+formatNumber(c.montant)+' DH</strong></td><td>'+(c.description||'-')+'</td><td><button class="btn btn-sm btn-icon btn-outline" onclick="editVariableCharge('+c.id+')"><i class="fas fa-edit"></i></button> <button class="btn btn-sm btn-icon btn-outline" style="color:var(--danger);border-color:rgba(220,53,69,0.3)" onclick="deleteVariableCharge('+c.id+')"><i class="fas fa-trash"></i></button></td></tr>').join('');
+const total=store.variableCharges.reduce((s,c)=>s+c.montant,0);
+document.getElementById('variableChargesTotal').textContent=formatNumber(total);
+}
+function saveFixedCharge(){
+const date=document.getElementById('cfDate').value;
+const voiture=document.getElementById('cfVoiture').value;
+const type=document.getElementById('cfType').value;
+const montant=parseFloat(document.getElementById('cfMontant').value)||0;
+const periode=document.getElementById('cfPeriode').value;
+const mois=document.getElementById('cfMois').value;
+if(!date||!montant){showToast('Veuillez remplir les champs obligatoires','error');return;}
+if(currentEditingId){
+const idx=store.fixedCharges.findIndex(c=>c.id===currentEditingId);
+store.fixedCharges[idx]={id:currentEditingId,date,voiture,type,montant,periode,mois};
+showToast('Charge fixe modifiee');
+}else{
+const newId=Math.max(...store.fixedCharges.map(c=>c.id),0)+1;
+store.fixedCharges.push({id:newId,date,voiture,type,montant,periode,mois});
+showToast('Charge fixe ajoutee');
+}
+closeModal('fixedChargeModal');
+renderFixedCharges();
+updateKPIs();
+}
+function saveVariableCharge(){
+const date=document.getElementById('cvDate').value;
+const voiture=document.getElementById('cvVoiture').value;
+const type=document.getElementById('cvType').value;
+const montant=parseFloat(document.getElementById('cvMontant').value)||0;
+const description=document.getElementById('cvDescription').value;
+if(!date||!montant){showToast('Veuillez remplir les champs obligatoires','error');return;}
+if(currentEditingId){
+const idx=store.variableCharges.findIndex(c=>c.id===currentEditingId);
+store.variableCharges[idx]={id:currentEditingId,date,voiture,type,montant,description};
+showToast('Charge variable modifiee');
+}else{
+const newId=Math.max(...store.variableCharges.map(c=>c.id),0)+1;
+store.variableCharges.push({id:newId,date,voiture,type,montant,description});
+showToast('Charge variable ajoutee');
+}
+closeModal('variableChargeModal');
+renderVariableCharges();
+updateKPIs();
+}
+function editFixedCharge(id){const c=store.fixedCharges.find(x=>x.id===id);if(!c)return;currentEditingId=id;document.getElementById('cfDate').value=c.date;document.getElementById('cfVoiture').value=c.voiture;document.getElementById('cfType').value=c.type;document.getElementById('cfMontant').value=c.montant;document.getElementById('cfPeriode').value=c.periode;document.getElementById('cfMois').value=c.mois;openModal('fixedChargeModal');}
+function editVariableCharge(id){const c=store.variableCharges.find(x=>x.id===id);if(!c)return;currentEditingId=id;document.getElementById('cvDate').value=c.date;document.getElementById('cvVoiture').value=c.voiture;document.getElementById('cvType').value=c.type;document.getElementById('cvMontant').value=c.montant;document.getElementById('cvDescription').value=c.description;openModal('variableChargeModal');}
+function deleteFixedCharge(id){if(!confirm('Supprimer cette charge ?'))return;store.fixedCharges=store.fixedCharges.filter(c=>c.id!==id);renderFixedCharges();showToast('Charge supprimee');updateKPIs();}
+function deleteVariableCharge(id){if(!confirm('Supprimer cette charge ?'))return;store.variableCharges=store.variableCharges.filter(c=>c.id!==id);renderVariableCharges();showToast('Charge supprimee');updateKPIs();}
+
+// ===================== PERSONNEL =====================
+function renderPersonnel(data=store.personnel){
+const tbody=document.getElementById('personnelBody');
+tbody.innerHTML=data.map(p=>'<tr><td>'+p.id+'</td><td>'+formatDate(p.date)+'</td><td><strong>'+formatNumber(p.montant)+' DH</strong></td><td>'+(p.description||'-')+'</td><td><button class="btn btn-sm btn-icon btn-outline" onclick="editPersonnel('+p.id+')"><i class="fas fa-edit"></i></button> <button class="btn btn-sm btn-icon btn-outline" style="color:var(--danger);border-color:rgba(220,53,69,0.3)" onclick="deletePersonnel('+p.id+')"><i class="fas fa-trash"></i></button></td></tr>').join('');
+const total=store.personnel.reduce((s,p)=>s+p.montant,0);
+document.getElementById('personnelTotal').textContent=formatNumber(total);
+}
+function savePersonnel(){
+const date=document.getElementById('pDate').value;
+const montant=parseFloat(document.getElementById('pMontant').value)||0;
+const description=document.getElementById('pDescription').value;
+if(!date||!montant){showToast('Veuillez remplir les champs obligatoires','error');return;}
+if(currentEditingId){
+const idx=store.personnel.findIndex(p=>p.id===currentEditingId);
+store.personnel[idx]={id:currentEditingId,date,montant,description};
+showToast('Charge personnel modifiee');
+}else{
+const newId=Math.max(...store.personnel.map(p=>p.id),0)+1;
+store.personnel.push({id:newId,date,montant,description});
+showToast('Charge personnel ajoutee');
+}
+closeModal('personnelModal');
+renderPersonnel();
+updateKPIs();
+}
+function editPersonnel(id){const p=store.personnel.find(x=>x.id===id);if(!p)return;currentEditingId=id;document.getElementById('pDate').value=p.date;document.getElementById('pMontant').value=p.montant;document.getElementById('pDescription').value=p.description;openModal('personnelModal');}
+function deletePersonnel(id){if(!confirm('Supprimer cette charge ?'))return;store.personnel=store.personnel.filter(p=>p.id!==id);renderPersonnel();showToast('Charge supprimee');updateKPIs();}
+
+// ===================== ALERTS =====================
+function renderAlerts(filter='all'){
+const container=document.getElementById('alertsContainer');
+let data=store.alerts;
+if(filter==='expired')data=data.filter(a=>a.statut==='EXPIRE');
+if(filter==='renew')data=data.filter(a=>a.statut==='A RENOUVELER');
+container.innerHTML=data.map(a=>{
+const cls=a.statut==='EXPIRE'?'danger':a.statut==='A RENOUVELER'?'warning':'success';
+const icon=a.statut==='EXPIRE'?'times-circle':a.statut==='A RENOUVELER'?'exclamation-circle':'check-circle';
+return '<div class="alert-item '+cls+'"><div class="alert-icon"><i class="fas fa-'+icon+'"></i></div><div class="alert-content"><div class="alert-title">'+a.voiture+' - '+a.document+'</div><div class="alert-desc">Expiration: '+formatDate(a.expiration)+'</div></div><div class="alert-days">'+(a.jours<0?'EXPIRE depuis '+Math.abs(a.jours)+' jours':a.jours+' jours restants')+'</div><span class="badge badge-'+cls+'">'+a.statut+'</span></div>';
+}).join('');
+const activeCount=store.alerts.filter(a=>a.statut!=='OK').length;
+document.getElementById('kpiAlerts').textContent=activeCount;
+document.getElementById('alertBadge').textContent=activeCount;
+
+// Dashboard alerts (top 3)
+const topAlerts=store.alerts.filter(a=>a.statut!=='OK').slice(0,3);
+document.getElementById('dashboardAlerts').innerHTML=topAlerts.map(a=>{
+const cls=a.statut==='EXPIRE'?'danger':'warning';
+const icon=a.statut==='EXPIRE'?'times-circle':'exclamation-circle';
+return '<div class="alert-item '+cls+'"><div class="alert-icon"><i class="fas fa-'+icon+'"></i></div><div class="alert-content"><div class="alert-title">'+a.voiture+' - '+a.document+'</div><div class="alert-desc">Expiration: '+formatDate(a.expiration)+'</div></div><div class="alert-days">'+(a.jours<0?'EXPIRE':'A renouveler')+'</div></div>';
+}).join('');
+
+// Summary
+const docs=['Assurance','Visite Technique','Agrement'];
+const summaryBody=document.getElementById('alertsSummaryBody');
+summaryBody.innerHTML=docs.map(d=>{
+const total=store.alerts.filter(a=>a.document===d).length;
+const expired=store.alerts.filter(a=>a.document===d&&a.statut==='EXPIRE').length;
+const renew=store.alerts.filter(a=>a.document===d&&a.statut==='A RENOUVELER').length;
+const ok=store.alerts.filter(a=>a.document===d&&a.statut==='OK').length;
+return '<tr><td><strong>'+d+'</strong></td><td>'+total+'</td><td style="color:var(--danger);font-weight:600">'+expired+'</td><td style="color:var(--warning);font-weight:600">'+renew+'</td><td style="color:var(--secondary);font-weight:600">'+ok+'</td></tr>';
+}).join('');
+}
+function filterAlerts(filter){renderAlerts(filter);}
+
+// ===================== REPORTS =====================
+function renderMonthlyReport(){
+const tbody=document.getElementById('monthlyReportBody');
+tbody.innerHTML=store.monthlyData.map(m=>{
+const totalCharges=m.chargesFixes+m.chargesVariables+m.chargesPersonnel;
+const result=m.revenus-totalCharges;
+return '<tr><td><strong>'+m.mois+'</strong></td><td>'+formatNumber(m.revenus)+' DH</td><td>'+formatNumber(m.chargesFixes)+' DH</td><td>'+formatNumber(m.chargesVariables)+' DH</td><td>'+formatNumber(m.chargesPersonnel)+' DH</td><td><strong>'+formatNumber(totalCharges)+' DH</strong></td><td style="color:'+(result>=0?'var(--secondary)':'var(--danger)')+'"><strong>'+formatNumber(result)+' DH</strong></td></tr>';
+}).join('');
+}
+function updateMonthlyReport(){
+const monthIdx=parseInt(document.getElementById('reportMonthSelect').value);
+const m=store.monthlyData[monthIdx];
+if(!m)return;
+const totalCharges=m.chargesFixes+m.chargesVariables+m.chargesPersonnel;
+const result=m.revenus-totalCharges;
+// Update summary box
+const totalRevenue=store.monthlyData.reduce((s,m)=>s+m.revenus,0);
+const totalFixed=store.monthlyData.reduce((s,m)=>s+m.chargesFixes,0);
+const totalVar=store.monthlyData.reduce((s,m)=>s+m.chargesVariables,0);
+const totalPers=store.monthlyData.reduce((s,m)=>s+m.chargesPersonnel,0);
+const totalAll=totalFixed+totalVar+totalPers;
+const net=totalRevenue-totalAll;
+document.getElementById('reportRevenue').textContent=formatNumber(totalRevenue)+' DH';
+document.getElementById('reportFixed').textContent=formatNumber(totalFixed)+' DH';
+document.getElementById('reportVariable').textContent=formatNumber(totalVar)+' DH';
+document.getElementById('reportPersonnel').textContent=formatNumber(totalPers)+' DH';
+document.getElementById('reportTotalCharges').textContent=formatNumber(totalAll)+' DH';
+document.getElementById('reportNet').textContent=formatNumber(net)+' DH';
+document.getElementById('zakatAmount').textContent=formatNumber(net*0.025);
+if(monthlyChartInstance){
+monthlyChartInstance.data.datasets[0].data=[m.revenus];
+monthlyChartInstance.data.datasets[1].data=[totalCharges];
+monthlyChartInstance.update();
+}
+}
+function initMonthlyChart(){
+const ctx=document.getElementById('monthlyChart');
+if(!ctx)return;
+if(monthlyChartInstance)monthlyChartInstance.destroy();
+const labels=store.monthlyData.map(m=>m.mois);
+const revenues=store.monthlyData.map(m=>m.revenus);
+const charges=store.monthlyData.map(m=>m.chargesFixes+m.chargesVariables+m.chargesPersonnel);
+monthlyChartInstance=new Chart(ctx,{type:'bar',data:{labels:labels,datasets:[{label:'Revenus',data:revenues,backgroundColor:'rgba(13,139,109,0.8)',borderRadius:6},{label:'Charges',data:charges,backgroundColor:'rgba(220,53,69,0.8)',borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top'}},scales:{y:{beginAtZero:true,grid:{color:'rgba(0,0,0,0.05)'}}}}});
+}
+
+// ===================== CHARTS =====================
+function initDashboardCharts(){
+const revCtx=document.getElementById('revenueChart');
+const chgCtx=document.getElementById('chargesChart');
+if(!revCtx||!chgCtx)return;
+if(revenueChartInstance)revenueChartInstance.destroy();
+if(chargesChartInstance)chargesChartInstance.destroy();
+const labels=store.monthlyData.map(m=>m.mois.substring(0,3));
+const revenues=store.monthlyData.map(m=>m.revenus);
+const charges=store.monthlyData.map(m=>m.chargesFixes+m.chargesVariables+m.chargesPersonnel);
+revenueChartInstance=new Chart(revCtx,{type:'line',data:{labels:labels,datasets:[{label:'Revenus',data:revenues,borderColor:'#0d8b6d',backgroundColor:'rgba(13,139,109,0.1)',fill:true,tension:0.4},{label:'Charges',data:charges,borderColor:'#dc3545',backgroundColor:'rgba(220,53,69,0.1)',fill:true,tension:0.4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top'}},scales:{y:{beginAtZero:true,grid:{color:'rgba(0,0,0,0.05)'}}}}});
+const fixedTotal=store.fixedCharges.reduce((s,c)=>s+c.montant,0);
+const varTotal=store.variableCharges.reduce((s,c)=>s+c.montant,0);
+const persTotal=store.personnel.reduce((s,p)=>s+p.montant,0);
+chargesChartInstance=new Chart(chgCtx,{type:'doughnut',data:{labels:['Charges Fixes','Charges Variables','Charges Personnel'],datasets:[{data:[fixedTotal,varTotal,persTotal],backgroundColor:['#3498db','#f39c12','#9b59b6'],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right'}}}});
+}
+
+// ===================== KPIs =====================
+function updateKPIs(){
+const totalRevenue=store.rentals.reduce((s,r)=>s+r.total,0);
+const totalFixed=store.fixedCharges.reduce((s,c)=>s+c.montant,0);
+const totalVar=store.variableCharges.reduce((s,c)=>s+c.montant,0);
+const totalPers=store.personnel.reduce((s,p)=>s+p.montant,0);
+const totalCharges=totalFixed+totalVar+totalPers;
+const result=totalRevenue-totalCharges;
+document.getElementById('kpiVehicles').textContent=store.vehicles.length;
+document.getElementById('kpiRentals').textContent=store.rentals.length;
+document.getElementById('kpiRevenue').innerHTML=formatNumber(totalRevenue)+' <small>DH</small>';
+document.getElementById('kpiCharges').innerHTML=formatNumber(totalCharges)+' <small>DH</small>';
+document.getElementById('kpiResult').innerHTML=formatNumber(result)+' <small>DH</small>';
+}
+
+// ===================== GLOBAL SEARCH =====================
+document.getElementById('globalSearch').addEventListener('input',function(){
+const val=this.value.toLowerCase();
+if(!val)return;
+// Simple global search - could be enhanced
+});
+
+// ===================== INIT =====================
+document.addEventListener('DOMContentLoaded',()=>{
+renderVehicles();
+renderRentals();
+renderFixedCharges();
+renderVariableCharges();
+renderPersonnel();
+renderAlerts();
+renderMonthlyReport();
+initDashboardCharts();
+updateKPIs();
+// Set today's date in modals
+const today=new Date().toISOString().split('T')[0];
+document.getElementById('rDate').value=today;
+document.getElementById('cfDate').value=today;
+document.getElementById('cvDate').value=today;
+document.getElementById('pDate').value=today;
+});
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+  // Initialisation de la connexion avec vos identifiants Supabase
+  const SUPABASE_URL = "https://gsilsmqfzhzedxswlhxq.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_BVutG4Emx-RYjwzKyxNs7Q_5sEkT6oH";
+  const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  async function saveVehicle() {
+    const voiture = {
+      marque: document.getElementById('vMarque').value,
+      modele: document.getElementById('vModele').value,
+      immatriculation: document.getElementById('vImmat').value,
+      categorie: document.getElementById('vCategorie').value,
+      prix_jour: parseFloat(document.getElementById('vPrix').value),
+      date_assurance: document.getElementById('vAssurance').value || null,
+      date_visite: document.getElementById('vVisite').value || null,
+      date_agrement: document.getElementById('vAgrement').value || null
+    };
+
+    const { data, error } = await supabase
+      .from('voitures')
+      .insert([voiture]);
+
+    if (error) {
+      alert("Erreur lors de l'enregistrement : " + error.message);
+    } else {
+      alert("Voiture enregistrée avec succès !");
+      closeModal('vehicleModal');
+      loadVehicles();
+    }
+  }
+
+  async function loadVehicles() {
+    const { data: voitures, error } = await supabase
+      .from('voitures')
+      .select('*');
+      
+    if (voitures) {
+      const tbody = document.getElementById('vehiclesBody');
+      tbody.innerHTML = '';
+      
+      voitures.forEach((v, index) => {
+        tbody.innerHTML += `
+          <tr>
+            <td>${index + 1}</td>
+            <td>${v.marque}</td>
+            <td>${v.modele}</td>
+            <td>${v.immatriculation}</td>
+            <td><span class="badge badge-info">${v.categorie}</span></td>
+            <td>${v.prix_jour} DH</td>
+            <td>${v.date_assurance || '-'}</td>
+            <td>${v.date_visite || '-'}</td>
+            <td>${v.date_agrement || '-'}</td>
+            <td>
+              <button class="btn btn-sm btn-outline btn-icon"><i class="fas fa-edit"></i></button>
+            </td>
+          </tr>
+        `;
+      });
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+      loadVehicles();
+  });
+</script>
+</body>
+</html>

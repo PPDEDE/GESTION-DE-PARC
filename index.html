@@ -472,7 +472,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 <div class="auth-card">
 <div class="auth-logo"><i class="fas fa-car-side"></i><h1>GESTION LOCATION</h1><p>Connectez-vous pour continuer</p></div>
 <div class="auth-error" id="authError"></div>
-<form id="authForm" onsubmit="event.preventDefault();handleAuth()">
+<form id="authForm">
 <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-input" id="authEmail" required placeholder="exemple@email.com"></div>
 <div class="form-group"><label class="form-label">Mot de passe</label><input type="password" class="form-input" id="authPassword" required placeholder="Minimum 6 caracteres" minlength="6"></div>
 <button class="btn btn-success" id="authBtn" style="width:100%;justify-content:center;margin-top:8px"><i class="fas fa-sign-in-alt"></i> <span id="authBtnText">Se connecter</span></button>
@@ -498,23 +498,32 @@ document.getElementById('authError').style.display = 'none';
 }
 
 async function handleAuth() {
-const email = document.getElementById('authEmail').value;
+const email = document.getElementById('authEmail').value.trim();
 const password = document.getElementById('authPassword').value;
+const btn = document.getElementById('authBtn');
 const errorEl = document.getElementById('authError');
 errorEl.style.display = 'none';
+btn.disabled = true;
+btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Chargement...';
+try {
 if (authMode === 'login') {
 const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-if (error) { errorEl.textContent = error.message; errorEl.style.display = 'block'; return; }
+if (error) { errorEl.textContent = error.message; errorEl.style.display = 'block'; showToast(error.message, 'error'); return; }
 currentUser = data.user;
+showToast('Connexion reussie !', 'success');
 showApp();
 } else {
 const { data, error } = await supabaseClient.auth.signUp({ email, password });
-if (error) { errorEl.textContent = error.message; errorEl.style.display = 'block'; return; }
-showToast('Compte cree ! Verifie ta boite mail pour confirmer.');
+if (error) { errorEl.textContent = error.message; errorEl.style.display = 'block'; showToast(error.message, 'error'); return; }
+showToast('Compte cree ! Vérifie ta boite mail pour confirmer.', 'success');
 authMode = 'login';
 document.getElementById('authBtnText').textContent = 'Se connecter';
 document.getElementById('authToggleText').textContent = 'Pas encore de compte ?';
 document.getElementById('authToggleLink').textContent = 'Creer un compte';
+}
+} finally {
+btn.disabled = false;
+btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> <span id="authBtnText">' + (authMode === 'login' ? 'Se connecter' : 'Creer un compte') + '</span>';
 }
 }
 
@@ -1025,6 +1034,7 @@ document.getElementById('cvDate').value=today;
 document.getElementById('pDate').value=today;
 });
 document.getElementById('logoutBtn').addEventListener('click',handleLogout);
+document.getElementById('authForm').addEventListener('submit',function(e){e.preventDefault();handleAuth();});
 </script>
 
 

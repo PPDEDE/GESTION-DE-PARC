@@ -475,7 +475,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 <form id="authForm">
 <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-input" id="authEmail" required placeholder="exemple@email.com"></div>
 <div class="form-group"><label class="form-label">Mot de passe</label><input type="password" class="form-input" id="authPassword" required placeholder="Minimum 6 caracteres" minlength="6"></div>
-<button class="btn btn-success" id="authBtn" style="width:100%;justify-content:center;margin-top:8px"><i class="fas fa-sign-in-alt"></i> <span id="authBtnText">Se connecter</span></button>
+<button type="button" class="btn btn-success" id="authBtn" style="width:100%;justify-content:center;margin-top:8px"><i class="fas fa-sign-in-alt"></i> <span id="authBtnText">Se connecter</span></button>
 </form>
 <div class="auth-toggle" id="authToggle"><span id="authToggleText">Pas encore de compte ?</span> <a id="authToggleLink" onclick="toggleAuthMode()">Creer un compte</a></div>
 </div>
@@ -1034,6 +1034,7 @@ document.getElementById('cvDate').value=today;
 document.getElementById('pDate').value=today;
 });
 document.getElementById('logoutBtn').addEventListener('click',handleLogout);
+document.getElementById('authBtn').addEventListener('click',handleAuth);
 document.getElementById('authForm').addEventListener('submit',function(e){e.preventDefault();handleAuth();});
 </script>
 

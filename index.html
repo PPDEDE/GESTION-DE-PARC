@@ -484,7 +484,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 <script>
 const SUPABASE_URL = "https://gsilsmqfzhzedxswlhxq.supabase.co";
 const SUPABASE_KEY = "sb_publishable_BVutG4Emx-RYjwzKyxNs7Q_5sEkT6oH";
-const supabaseClient = Supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let authMode = 'login';
 let currentUser = null;

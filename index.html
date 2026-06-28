@@ -386,6 +386,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 <div class="form-group"><label class="form-label">Marque</label><input type="text" class="form-input" id="vMarque" required></div>
 <div class="form-group"><label class="form-label">Modele</label><input type="text" class="form-input" id="vModele" required></div>
 <div class="form-group"><label class="form-label">Immatriculation</label><input type="text" class="form-input" id="vImmat" required></div>
+<div class="form-group"><label class="form-label">Photo</label><input type="file" class="form-input" id="vPhoto" accept="image/*"><div id="vPhotoPreview" style="margin-top:6px;max-width:120px;display:none"></div></div>
 <div class="form-group"><label class="form-label">Categorie</label><select class="form-select" id="vCategorie"><option value="Economique">Economique</option><option value="Compacte">Compacte</option><option value="Premium">Premium</option></select></div>
 <div class="form-group"><label class="form-label">Prix/Jour (DH)</label><input type="number" class="form-input" id="vPrix" required></div>
 <div class="form-group"><label class="form-label">Date Assurance</label><input type="date" class="form-input" id="vAssurance"></div>
@@ -560,18 +561,18 @@ variableCharges: [],
 personnel: [],
 
 monthlyData:[
-{mois:'Janvier',revenus:80550,chargesFixes:4500,chargesVariables:1250,chargesPersonnel:2500},
-{mois:'Fevrier',revenus:2500,chargesFixes:2000,chargesVariables:1200,chargesPersonnel:1800},
-{mois:'Mars',revenus:0,chargesFixes:0,chargesVariables:250,chargesPersonnel:0},
-{mois:'Avril',revenus:0,chargesFixes:0,chargesVariables:2100,chargesPersonnel:0},
-{mois:'Mai',revenus:0,chargesFixes:0,chargesVariables:0,chargesPersonnel:2500},
-{mois:'Juin',revenus:0,chargesFixes:0,chargesVariables:530,chargesPersonnel:2000},
-{mois:'Juillet',revenus:0,chargesFixes:0,chargesVariables:0,chargesPersonnel:2000},
-{mois:'Aout',revenus:0,chargesFixes:0,chargesVariables:0,chargesPersonnel:2000},
-{mois:'Septembre',revenus:0,chargesFixes:0,chargesVariables:0,chargesPersonnel:2000},
-{mois:'Octobre',revenus:0,chargesFixes:0,chargesVariables:650,chargesPersonnel:5000},
-{mois:'Novembre',revenus:0,chargesFixes:0,chargesVariables:550,chargesPersonnel:3000},
-{mois:'Decembre',revenus:0,chargesFixes:0,chargesVariables:120,chargesPersonnel:5000}
+{mois:'Janvier',revenus:0,chargesFixes:0,chargesVariables:0,chargesPersonnel:0},
+{mois:'Fevrier',revenus:0,chargesFixes:0,chargesVariables:0,chargesPersonnel:0},
+{mois:'Mars',revenus:0,chargesFixes:0,chargesVariables:0,chargesPersonnel:0},
+{mois:'Avril',revenus:0,chargesFixes:0,chargesVariables:0,chargesPersonnel:0},
+{mois:'Mai',revenus:0,chargesFixes:0,chargesVariables:0,chargesPersonnel:0},
+{mois:'Juin',revenus:0,chargesFixes:0,chargesVariables:0,chargesPersonnel:0},
+{mois:'Juillet',revenus:0,chargesFixes:0,chargesVariables:0,chargesPersonnel:0},
+{mois:'Aout',revenus:0,chargesFixes:0,chargesVariables:0,chargesPersonnel:0},
+{mois:'Septembre',revenus:0,chargesFixes:0,chargesVariables:0,chargesPersonnel:0},
+{mois:'Octobre',revenus:0,chargesFixes:0,chargesVariables:0,chargesPersonnel:0},
+{mois:'Novembre',revenus:0,chargesFixes:0,chargesVariables:0,chargesPersonnel:0},
+{mois:'Decembre',revenus:0,chargesFixes:0,chargesVariables:0,chargesPersonnel:0}
 ]
 };
 
@@ -605,7 +606,8 @@ container.appendChild(toast);
 setTimeout(()=>toast.remove(),3000);
 }
 function openModal(id){document.getElementById(id).classList.add('active');currentEditingId=null;}
-function closeModal(id){document.getElementById(id).classList.remove('active');document.querySelector('#'+id+' form').reset();currentEditingId=null;}
+function closeModal(id){document.getElementById(id).classList.remove('active');document.querySelector('#'+id+' form').reset();currentEditingId=null;
+if(id==='vehicleModal'){document.getElementById('vPhotoPreview').style.display='none';document.getElementById('vPhotoPreview').innerHTML='';document.getElementById('vPhoto').value='';}}
 
 // ===================== NAVIGATION =====================
 document.querySelectorAll('.nav-item').forEach(item=>{
@@ -636,7 +638,7 @@ const ass=new Date(v.assurance);const vis=new Date(v.visite);const agr=new Date(
 const assDays=Math.ceil((ass-today)/(1000*60*60*24));
 const visDays=Math.ceil((vis-today)/(1000*60*60*24));
 const agrDays=Math.ceil((agr-today)/(1000*60*60*24));
-return '<tr><td>'+v.id+'</td><td><strong>'+v.marque+'</strong></td><td>'+v.modele+'</td><td>'+v.immat+'</td><td><span class="badge badge-'+(v.categorie==='Premium'?'warning':v.categorie==='Compacte'?'info':'success')+'">'+v.categorie+'</span></td><td><strong>'+formatNumber(v.prixJour)+' DH</strong></td><td>'+formatDate(v.assurance)+'<br><small style="color:'+(assDays<30?'var(--danger)':assDays<90?'var(--warning)':'var(--secondary)')+'">'+assDays+' jours</small></td><td>'+formatDate(v.visite)+'<br><small style="color:'+(visDays<30?'var(--danger)':visDays<90?'var(--warning)':'var(--secondary)')+'">'+visDays+' jours</small></td><td>'+formatDate(v.agrement)+'<br><small style="color:'+(agrDays<30?'var(--danger)':agrDays<90?'var(--warning)':'var(--secondary)')+'">'+agrDays+' jours</small></td><td><button class="btn btn-sm btn-icon btn-outline" onclick="editVehicle('+v.id+')"><i class="fas fa-edit"></i></button> <button class="btn btn-sm btn-icon btn-outline" style="color:var(--danger);border-color:rgba(220,53,69,0.3)" onclick="deleteVehicle('+v.id+')"><i class="fas fa-trash"></i></button></td></tr>';
+return '<tr><td>'+v.id+'</td><td>'+(v.photo?'<img src="'+v.photo+'" style="width:40px;height:40px;border-radius:6px;object-fit:cover;border:1px solid var(--border)">':'<div style="width:40px;height:40px;border-radius:6px;background:var(--bg);display:flex;align-items:center;justify-content:center;color:var(--text-light)"><i class="fas fa-car"></i></div>')+'</td><td><strong>'+v.marque+'</strong></td><td>'+v.modele+'</td><td>'+v.immat+'</td><td><span class="badge badge-'+(v.categorie==='Premium'?'warning':v.categorie==='Compacte'?'info':'success')+'">'+v.categorie+'</span></td><td><strong>'+formatNumber(v.prixJour)+' DH</strong></td><td>'+formatDate(v.assurance)+'<br><small style="color:'+(assDays<30?'var(--danger)':assDays<90?'var(--warning)':'var(--secondary)')+'">'+assDays+' jours</small></td><td>'+formatDate(v.visite)+'<br><small style="color:'+(visDays<30?'var(--danger)':visDays<90?'var(--warning)':'var(--secondary)')+'">'+visDays+' jours</small></td><td>'+formatDate(v.agrement)+'<br><small style="color:'+(agrDays<30?'var(--danger)':agrDays<90?'var(--warning)':'var(--secondary)')+'">'+agrDays+' jours</small></td><td><button class="btn btn-sm btn-icon btn-outline" onclick="editVehicle('+v.id+')"><i class="fas fa-edit"></i></button> <button class="btn btn-sm btn-icon btn-outline" style="color:var(--danger);border-color:rgba(27,53,69,0.3)" onclick="deleteVehicle('+v.id+')"><i class="fas fa-trash"></i></button></td></tr>';
 }).join('');
 document.getElementById('kpiVehicles').textContent=store.vehicles.length;
 updateVehicleSelects();
@@ -651,12 +653,25 @@ return matchSearch&&matchCat;
 });
 renderVehicles(filtered);
 }
+document.getElementById('vPhoto').addEventListener('change',function(e){
+const preview=document.getElementById('vPhotoPreview');
+const file=e.target.files[0];
+if(file){const reader=new FileReader();reader.onload=function(ev){preview.innerHTML='<img src="'+ev.target.result+'" style="width:100%;border-radius:6px;border:1px solid var(--border)">';preview.style.display='block'};reader.readAsDataURL(file)}else{preview.style.display='none';preview.innerHTML=''}
+});
 function updateVehicleSelects(){
 const opts=store.vehicles.map(v=>'<option value="'+v.modele+'">'+v.marque+' '+v.modele+'</option>').join('');
 ['rVoiture','cfVoiture','cvVoiture'].forEach(id=>{
 const el=document.getElementById(id);
 if(el)el.innerHTML='<option value="">-- Selectionner --</option>'+opts;
 });
+}
+async function uploadPhoto(file,id){
+const ext=file.name.split('.').pop();
+const path='vehicules/'+id+'_'+Date.now()+'.'+ext;
+const{error}=await supabaseClient.storage.from('vehicules').upload(path,file,{upsert:true});
+if(error){showToast('Erreur upload photo: '+error.message,'error');return null;}
+const{data:urlData}=supabaseClient.storage.from('vehicules').getPublicUrl(path);
+return urlData.publicUrl;
 }
 async function saveVehicle(){
 const marque=document.getElementById('vMarque').value;
@@ -667,20 +682,29 @@ const prixJour=parseFloat(document.getElementById('vPrix').value);
 const assurance=document.getElementById('vAssurance').value||null;
 const visite=document.getElementById('vVisite').value||null;
 const agrement=document.getElementById('vAgrement').value||null;
+const photoFile=document.getElementById('vPhoto').files[0];
 if(!marque||!modele||!immat||!prixJour){showToast('Veuillez remplir tous les champs obligatoires','error');return;}
 if(currentEditingId){
-const{data,error}=await supabaseClient.from('voitures').update({marque,modele,immat,categorie,prixJour,assurance,visite,agrement}).eq('id',currentEditingId).select();
+let photo=store.vehicles.find(v=>v.id===currentEditingId)?.photo||null;
+if(photoFile){photo=await uploadPhoto(photoFile,currentEditingId);if(!photo)return;}
+const{data,error}=await supabaseClient.from('voitures').update({marque,modele,immat,categorie,prixJour,assurance,visite,agrement,photo}).eq('id',currentEditingId).select();
 if(error){showToast(error.message,'error');return;}
 const idx=store.vehicles.findIndex(v=>v.id===currentEditingId);
 store.vehicles[idx]=data[0];
 showToast('Voiture modifiee avec succes');
 }else{
-const{data,error}=await supabaseClient.from('voitures').insert({marque,modele,immat,categorie,prixJour,assurance,visite,agrement}).select();
+let photo=null;
+if(photoFile){photo=await uploadPhoto(photoFile,'temp');if(!photo)return;}
+const{data,error}=await supabaseClient.from('voitures').insert({marque,modele,immat,categorie,prixJour,assurance,visite,agrement,photo}).select();
 if(error){showToast(error.message,'error');return;}
+const newId=data[0].id;
+if(photoFile&&photo.includes('temp')){photo=await uploadPhoto(photoFile,newId);if(photo){const{error:updErr}=await supabaseClient.from('voitures').update({photo}).eq('id',newId);if(!updErr)data[0].photo=photo}}
 store.vehicles.push(data[0]);
 showToast('Voiture ajoutee avec succes');
 }
 closeModal('vehicleModal');
+document.getElementById('vPhotoPreview').style.display='none';
+document.getElementById('vPhotoPreview').innerHTML='';
 renderVehicles();
 }
 function editVehicle(id){
@@ -695,6 +719,8 @@ document.getElementById('vPrix').value=v.prixJour;
 document.getElementById('vAssurance').value=v.assurance;
 document.getElementById('vVisite').value=v.visite;
 document.getElementById('vAgrement').value=v.agrement;
+const preview=document.getElementById('vPhotoPreview');
+if(v.photo){preview.innerHTML='<img src="'+v.photo+'" style="width:100%;border-radius:6px;border:1px solid var(--border)">';preview.style.display='block'}else{preview.style.display='none';preview.innerHTML=''}
 openModal('vehicleModal');
 }
 async function deleteVehicle(id){

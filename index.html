@@ -512,6 +512,16 @@ if (error) { errorEl.textContent = error.message; errorEl.style.display = 'block
 currentUser = data.user;
 showToast('Connexion reussie !', 'success');
 showApp();
+await loadAllData();
+renderVehicles();
+renderRentals();
+renderFixedCharges();
+renderVariableCharges();
+renderPersonnel();
+renderAlerts();
+renderMonthlyReport();
+initDashboardCharts();
+updateKPIs();
 } else {
 const { data, error } = await supabaseClient.auth.signUp({ email, password });
 if (error) { errorEl.textContent = error.message; errorEl.style.display = 'block'; showToast(error.message, 'error'); return; }
